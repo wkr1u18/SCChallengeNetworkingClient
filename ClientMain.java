@@ -1,40 +1,99 @@
 /**
- * Server code for simple chat over sockets program
+ * Client code for simple chat over sockets program
  * @author Wojciech Rozowski (wkr1u18)
  */
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
-public class ClientMain {
-	public static void main(String[] args) {
-		//Get host name and port number
-		Scanner myScanner = new Scanner(System.in);
-		String hostName;
-		int port;
-		System.out.println("Enter host name:");
-		hostName = myScanner.nextLine();
-		System.out.println("Enter port number");
-		port = myScanner.nextInt();
-		
+public class ClientMain implements Runnable {
+	private Socket clientSocket = null;
+	private Thread t = null;
+	private Scanner consoleInput = null;
+	private PrintWriter out = null;
+	private ClientThread client = null;
+	
+	public ClientMain(String hostName, int portNumber) {
+		System.out.println("Connecting to server...");
 		try {
 			//Opens a socket
-			Socket mySocket = new Socket(hostName,port);
-			//Creates output PrintWriter and input BufferedReader objects using Socket methods
-			PrintWriter out = new PrintWriter(mySocket.getOutputStream(),true);
-			BufferedReader in = new BufferedReader(new InputStreamReader(mySocket.getInputStream()));
-			String userInput;
-			//While user types types next line, send it to server
-			while((userInput = myScanner.nextLine())!=null) {
-				out.println(userInput);
-				System.out.println("echo: " + in.readLine());
+			clientSocket = new Socket(hostName, portNumber);
+			System.out.println("Succesfully connected to server.");
+			start();
+		}
+		catch (IOException ioe) {
+			System.out.println(ioe);
+		}
+	}
+	
+	public void start() throws IOException{
+		consoleInput = new Scanner(System.in);
+		//Creates output PrintWriter and input BufferedReader objects using Socket methods
+		out = new PrintWriter(clientSocket.getOutputStream(),true);
+		if (t==null) {
+			//creates new ClientThread object and initialises it 
+			client = new ClientThread(this, clientSocket);
+			t = new Thread(this);
+			t.start();
+		}
+	}
+	
+	public void stop() {
+		//Close thread
+		if(t != null) {
+			t.stop();
+			t = null;
+		}
+		try {
+			//Closes consoleInput Scanner
+			if (consoleInput != null) {
+				consoleInput.close();
+			}
+			
+			//Closes out PrintWriter
+			if (out != null) {
+				out.close();
+			}
+			
+			//Closes clientScoket Socket
+			if(clientSocket!=null) {
+				clientSocket.close();
 			}
 		}
-		catch (Exception e) {
-			System.out.println("Unhandled exception");
+		catch(IOException ioe) {
+			System.out.println(ioe);
 		}
+		//Closes the ClientThread
+		client.close();
+	}
+	
+	public void handle(String msg) {
+		if(msg.equals(".quitconfirm")) {
+			stop();
+		}
+		else {
+			System.out.println(msg);
+		}
+	}
+	
+	//Thread run mehod
+	public void run() {
+		while (t!=null) {
+			try {
+				//Send the input from consoleInput Scanner object
+				out.println(consoleInput.nextLine());
+			}
+			catch (Exception e) {
+				System.out.println(e);
+			}
+		}
+	}
+	
+	public static void main(String[] args) {
+		ClientMain myClient = new ClientMain("localhost", 1027);
 	}
 }
