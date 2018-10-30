@@ -43,6 +43,7 @@ public class ClientMain implements Runnable {
 	}
 	
 	public void stop() {
+		System.out.println("Stopping client. Press any key to quit...");
 		//Close thread
 		if(t != null) {
 			t.stop();
@@ -69,6 +70,7 @@ public class ClientMain implements Runnable {
 		}
 		//Closes the ClientThread
 		client.close();
+		System.exit(0);
 	}
 	
 	public void handle(String msg) {
@@ -94,6 +96,8 @@ public class ClientMain implements Runnable {
 	}
 	
 	public static void main(String[] args) {
-		ClientMain myClient = new ClientMain("localhost", 1027);
+		Scanner textIn = new Scanner(System.in);
+		System.out.println("Welcome to client. Please specify host name and port number");
+		ClientMain myClient = new ClientMain(textIn.nextLine(), textIn.nextInt());
 	}
 }

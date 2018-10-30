@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
-public class ClientThread {
+public class ClientThread extends Thread{
 	private Socket clientSocket = null;
 	private ClientMain masterClient = null;
 	private BufferedReader in = null;
@@ -18,8 +18,8 @@ public class ClientThread {
 		//Initialises the instance objects
 		masterClient = initialMasterClient;
 		clientSocket = initialClientSocket;
-		
-
+		open();
+		start();
 	}
 	
 	//Opens the Buffered Reader object
@@ -47,6 +47,7 @@ public class ClientThread {
 
 	
 	public void run() {
+		System.out.println("Client thread is running");
 		while(true) {
 			try {
 				masterClient.handle(in.readLine());
